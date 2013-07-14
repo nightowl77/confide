@@ -326,7 +326,7 @@ class ConfideUser extends Ardent implements UserInterface {
 
         $user = $this;
 
-        static::$app['mailer']->send($view_name, $params, function($m) use ($subject_translation, $user)
+        static::$app['mailer']->queue($view_name, $params, function($m) use ($subject_translation, $user)
         {
             $m->to( $user->email )
                 ->subject( ConfideUser::$app['translator']->get($subject_translation) );
