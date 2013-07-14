@@ -202,7 +202,7 @@ class ConfideUser extends Ardent implements UserInterface {
     {
         if ( empty($this->id) )
         {
-            $this->confirmation_code = md5( uniqid(mt_rand(), true) );
+            $this->confirmation_code = str_random(22);
         }
 
         /*
@@ -235,7 +235,7 @@ class ConfideUser extends Ardent implements UserInterface {
             $this->sendEmail( 'confide::confide.email.account_confirmation.subject', $view, array('user' => $this) );
 
             // Save in cache that the email has been sent. Will last for two hours
-            static::$app['cache']->put('confirmation_email_'.$this->_id, true, 120);
+            static::$app['cache']->put('confirmation_email_'.$this->id, true, 120);
         }
 
         return true;
