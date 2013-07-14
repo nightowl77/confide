@@ -202,7 +202,7 @@ class ConfideUser extends Ardent implements UserInterface {
     {
         if ( empty($this->id) )
         {
-            $this->confirmation_code = str_random(22);
+            $this->confirmation_code = str_random(8);
         }
 
         /*
