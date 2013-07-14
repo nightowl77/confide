@@ -210,7 +210,7 @@ class ConfideEloquentRepository implements ConfideRepository
      */
     public function forgotPassword( $user )
     {
-        $token = md5( uniqid(mt_rand(), true) );
+        $token = str_random(16);
 
         $values = array(
             'email'=> $user->email,
