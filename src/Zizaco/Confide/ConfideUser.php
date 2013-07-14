@@ -129,7 +129,7 @@ class ConfideUser extends Ardent implements UserInterface {
 
         $view = static::$app['config']->get('confide::email_reset_password');
 
-        $this->sendEmail( 'confide::confide.email.password_reset.subject', $view, array('user'=>$this, 'token'=>$token) );
+        $this->sendEmail( 'confide.email.password_reset.subject', $view, array('user'=>$this, 'token'=>$token) );
 
         return true;
     }
@@ -232,7 +232,7 @@ class ConfideUser extends Ardent implements UserInterface {
         {
             $view = static::$app['config']->get('confide::email_account_confirmation');
 
-            $this->sendEmail( 'confide::confide.email.account_confirmation.subject', $view, array('user' => $this) );
+            $this->sendEmail( 'confide.email.account_confirmation.subject', $view, array('user' => $this) );
 
             // Save in cache that the email has been sent. Will last for two hours
             static::$app['cache']->put('confirmation_email_'.$this->id, true, 120);
