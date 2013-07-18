@@ -129,7 +129,7 @@ class ConfideUser extends Ardent implements UserInterface {
 
         $view = static::$app['config']->get('confide::email_reset_password');
 
-        $this->sendEmail( 'confide::confide.email.password_reset.subject', $view, array('user'=>$this, 'token'=>$token) );
+        $this->sendEmail( 'confide.email.password_reset.subject', $view, array('name' => $this->name, 'token' => $token) );
 
         return true;
     }
@@ -183,7 +183,7 @@ class ConfideUser extends Ardent implements UserInterface {
         {
             $this->validationErrors->add(
                 'duplicated',
-                static::$app['translator']->get('confide::confide.alerts.duplicated_credentials')
+                static::$app['translator']->get('confide.alerts.duplicated_credentials')
             );
 
             return false;
@@ -202,7 +202,7 @@ class ConfideUser extends Ardent implements UserInterface {
     {
         if ( empty($this->id) )
         {
-            $this->confirmation_code = md5( uniqid(mt_rand(), true) );
+            $this->confirmation_code = str_random(8);
         }
 
         /*
@@ -232,10 +232,10 @@ class ConfideUser extends Ardent implements UserInterface {
         {
             $view = static::$app['config']->get('confide::email_account_confirmation');
 
-            $this->sendEmail( 'confide::confide.email.account_confirmation.subject', $view, array('user' => $this) );
+            $this->sendEmail( 'confide.email.account_confirmation.subject', $view, array('name' => $this->name, 'confirmation_code' => $this->confirmation_code) );
 
             // Save in cache that the email has been sent. Will last for two hours
-            static::$app['cache']->put('confirmation_email_'.$this->_id, true, 120);
+            static::$app['cache']->put('confirmation_email_'.$this->id, true, 120);
         }
 
         return true;
@@ -325,10 +325,9 @@ class ConfideUser extends Ardent implements UserInterface {
 
         $user = $this;
 
-        static::$app['mailer']->queue($view_name, $params, function($m) use ($subject_translation, $user)
+        Mail::queue($view_name, $params, function($m) use ($subject_translation, $user)
         {
-            $m->to( $user->email )
-            ->subject( ConfideUser::$app['translator']->get($subject_translation) );
+            $m->to( $user->email )->subject( ConfideUser::$app['translator']->get($subject_translation) );
         });
     }
 
