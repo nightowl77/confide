@@ -178,7 +178,7 @@ class ConfideUser extends Ardent implements UserInterface {
 
         if(! $duplicated)
         {
-            return $this->real_save( $rules, $customMessages, $options, $beforeSave, $afterSave );    
+            return $this->real_save( $rules, $customMessages, $options, $beforeSave, $afterSave, $force );    
         }
         else
         {
@@ -199,20 +199,20 @@ class ConfideUser extends Ardent implements UserInterface {
      * @param bool $forced Indicates whether the user is being saved forcefully
      * @return bool
      */
-    public function beforeSave( $forced = false )
+     public static function beforeSave( $user ) 
     {
-        if ( empty($this->id) )
+        if ( empty($user->id) )
         {
-            $this->confirmation_code = str_random(8);
+            $user->confirmation_code = str_random(8);
         }
 
         /*
          * Remove password_confirmation field before save to
          * database.
          */
-        if ( isset($this->password_confirmation) )
+        if ( isset($user->password_confirmation) )
         {
-            unset( $this->password_confirmation );
+            unset( $user->password_confirmation );
         }
 
         return true;
@@ -227,16 +227,16 @@ class ConfideUser extends Ardent implements UserInterface {
      * @param bool $forced Indicates whether the user is being saved forcefully
      * @return bool
      */
-    public function afterSave( $success,  $forced = false )
+    public static function afterSave( $user,  $status = '' ) 
     {
-        if ( $success  && ! $this->confirmed && ! static::$app['cache']->get('confirmation_email_'.$this->id) )
+        if (! $user->confirmed && ! static::$app['cache']->get('confirmation_email_'.$user->id) ) 
         {
             $view = static::$app['config']->get('confide::email_account_confirmation');
 
-            $this->sendEmail( 'confide.email.account_confirmation.subject', $view, array('name' => $this->name, 'confirmation_code' => $this->confirmation_code) );
+            $user->sendEmail( 'confide.email.account_confirmation.subject', $view, array('name' => $user->name, 'confirmation_code' => $user->confirmation_code) );
 
             // Save in cache that the email has been sent. Will last for two hours
-            static::$app['cache']->put('confirmation_email_'.$this->id, true, 120);
+            static::$app['cache']->put('confirmation_email_'.$user->id, true, 120);
         }
 
         return true;
@@ -255,12 +255,12 @@ class ConfideUser extends Ardent implements UserInterface {
      * @param \Closure $afterSave
      * @return bool
      */
-    protected function real_save( array $rules = array(), array $customMessages = array(), array $options = array(), \Closure $beforeSave = null, \Closure $afterSave = null )
+    protected function real_save( array $rules = array(), array $customMessages = array(), array $options = array(), \Closure $beforeSave = null, \Closure $afterSave = null, $force = false )
     {
         if ( defined('CONFIDE_TEST') )
         {
-            $this->beforeSave();
-            $this->afterSave( true );
+            self::beforeSave( $this );
+            self::afterSave( $this ); 
             return true;
         }
         else{
@@ -275,7 +275,7 @@ class ConfideUser extends Ardent implements UserInterface {
                 $rules['password'] = 'required';
             }
 
-            return parent::save( $rules, $customMessages, $options, $beforeSave, $afterSave );
+            return parent::save( $rules, $customMessages, $options, $beforeSave, $afterSave, $force );
         }
     }
 
@@ -288,12 +288,12 @@ class ConfideUser extends Ardent implements UserInterface {
      * @param callable $afterSave
      * @return bool
      */
-    public function amend( array $rules = array(), array $customMessages = array(), array $options = array(), \Closure $beforeSave = null, \Closure $afterSave = null )
+    public function amend( array $rules = array(), array $customMessages = array(), array $options = array(), \Closure $beforeSave = null, \Closure $afterSave = null, $force = false )
     {
-        if(empty($rules)) {
+        if( empty($rules)) {
             $rules = $this->getUpdateRules();
         }
-        return $this->save( $rules, $customMessages, $options, $beforeSave, $afterSave );
+        return $this->save( $rules, $customMessages, $options, $beforeSave, $afterSave, $force );
     }
 
     /**
