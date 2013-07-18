@@ -1,5 +1,6 @@
 <?php namespace Zizaco\Confide;
 
+use Illuminate\Mail;
 use Illuminate\Auth\UserInterface;
 use LaravelBook\Ardent\Ardent;
 use J20\Uuid\Uuid;
@@ -129,7 +130,7 @@ class ConfideUser extends Ardent implements UserInterface {
 
         $view = static::$app['config']->get('confide::email_reset_password');
 
-        $this->sendEmail( 'confide.email.password_reset.subject', $view, array('user'=>$this, 'token'=>$token) );
+        $this->sendEmail( 'confide.email.password_reset.subject', $view, array('name' => $this->name, 'token' => $token) );
 
         return true;
     }
@@ -232,7 +233,7 @@ class ConfideUser extends Ardent implements UserInterface {
         {
             $view = static::$app['config']->get('confide::email_account_confirmation');
 
-            $this->sendEmail( 'confide.email.account_confirmation.subject', $view, array('user' => $this) );
+            $this->sendEmail( 'confide.email.account_confirmation.subject', $view, array('name' => $this->name, 'confirmation_code' => $this->confirmation_code) );
 
             // Save in cache that the email has been sent. Will last for two hours
             static::$app['cache']->put('confirmation_email_'.$this->id, true, 120);
@@ -325,7 +326,7 @@ class ConfideUser extends Ardent implements UserInterface {
 
         $user = $this;
 
-        static::$app['mailer']->send($view_name, $params, function($m) use ($subject_translation, $user)
+        static::$app['mailer']->queue($view_name, $params, function($m) use ($subject_translation, $user)
         {
             $m->to( $user->email )
             ->subject( ConfideUser::$app['translator']->get($subject_translation) );
