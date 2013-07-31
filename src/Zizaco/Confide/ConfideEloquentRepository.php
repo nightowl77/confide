@@ -83,7 +83,7 @@ class ConfideEloquentRepository implements ConfideRepository
      */
     public function getUserByMail( $email )
     {
-        $user = $this->model()->where('email', '=', $email)->get()->first();
+        $user = $this->model()->where('email', '=', $email)->first();
 
         return $user;
     }

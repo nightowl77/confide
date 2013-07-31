@@ -27,6 +27,12 @@ return array(
         'title' => 'Forgot password',
         'submit' => 'Continue',
     ),
+    
+    'reset' => array(
+        'title' => 'Reset your Password',
+        'submit' => 'Continue',
+    ),
+    
 
     'alerts' => array(
         'account_created' => 'Your account has been successfully created. Please check your email for the instructions on how to confirm your account.',

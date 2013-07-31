@@ -129,7 +129,7 @@ class ConfideUser extends Ardent implements UserInterface {
 
         $view = static::$app['config']->get('confide::email_reset_password');
 
-        $this->sendEmail( 'confide.email.password_reset.subject', $view, array('name' => $this->name, 'token' => $token) );
+        $this->sendEmail( 'confide::confide.email.password_reset.subject', $view, array('name' => $this->name, 'token' => $token) );
 
         return true;
     }
@@ -168,28 +168,9 @@ class ConfideUser extends Ardent implements UserInterface {
      */
     public function save( array $rules = array(), array $customMessages = array(), array $options = array(), \Closure $beforeSave = null, \Closure $afterSave = null, $force = false )
     {
-        $duplicated = false;
-
-        if(! $this->id)
-        {
-            $duplicated = static::$app['confide.repository']->userExists( $this );
-        }
-
-        if(! $duplicated)
-        {
-            return $this->real_save( $rules, $customMessages, $options, $beforeSave, $afterSave );
-        }
-        else
-        {
-            $this->validationErrors->add(
-                'duplicated',
-                static::$app['translator']->get('confide.alerts.duplicated_credentials')
-            );
-
-            return false;
-        }
+      return $this->real_save( $rules, $customMessages, $options, $beforeSave, $afterSave );
     }
-
+    
     /**
      * Ardent method overloading:
      * Before save the user. Generate a confirmation
@@ -229,7 +210,7 @@ class ConfideUser extends Ardent implements UserInterface {
         {
             $view = static::$app['config']->get('confide::email_account_confirmation');
 
-            $this->sendEmail( 'confide.email.account_confirmation.subject', $view, array('name' => $this->name, 'confirmation_code' => $this->confirmation_code) );
+            $this->sendEmail( 'confide::confide.email.account_confirmation.subject', $view, array('user' => $this) );
 
             // Save in cache that the email has been sent.
             $signup_cache = (int)static::$app['config']->get('confide::signup_cache');
@@ -263,18 +244,14 @@ class ConfideUser extends Ardent implements UserInterface {
             $this->afterSave();
             return true;
         }
-        else{
-
-            /*
-             * This will make sure that a non modified password
-             * will not trigger validation error.
-             */
-            if( empty($rules) && $this->password == $this->getOriginal('password') )
+        else {
+            // If this is an update, and if the user type in a password in either
+            // password or password_confirmation, remove the rules related to that.  
+            if ($this->exists && (!$this->password && !$this->password_confirmation ))
             {
-                $rules = static::$rules;
-                $rules['password'] = 'required';
+              if (empty($rules)) $rules = static::$rules;
+              unset($rules['password'], $rules['password_confirmation']);
             }
-
             return parent::save( $rules, $customMessages, $options, $beforeSave, $afterSave );
         }
     }
@@ -325,8 +302,8 @@ class ConfideUser extends Ardent implements UserInterface {
         static::fixViewHint();
 
         $user = $this;
-
-        Mail::queue($view_name, $params, function($m) use ($subject_translation, $user)
+        
+        static::$app['mailer']->send($view_name, $params, function($m) use ($subject_translation, $user)
         {
             $m->to( $user->email )
                 ->subject( ConfideUser::$app['translator']->get($subject_translation) );

@@ -17,13 +17,19 @@
     "require": {
         "php": ">=5.3.0",
         "illuminate/support": "*",
-        "laravelbook/ardent": "*"
+        "laravelbook/ardent": "2.0.x"
     },
     "require-dev": {
         "mockery/mockery": "0.7.2",
         "illuminate/database": "4.0.x",
         "illuminate/auth": "4.0.x"
     },
+    "repositories": [
+      { 
+        "type" : "vcs",
+        "url" : "https://github.com/nightowl/ardent"
+      }
+    ],
     "suggest": {
         "zizaco/entrust":"add Role-based Permissions to Laravel 4"
     },
