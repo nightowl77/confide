@@ -247,10 +247,19 @@ class ConfideUser extends Ardent implements UserInterface {
         else {
             // If this is an update, and if the user type in a password in either
             // password or password_confirmation, remove the rules related to that.  
-            if ($this->exists && (!$this->password && !$this->password_confirmation ))
+            if ($this->exists)
             {
               if (empty($rules)) $rules = static::$rules;
-              unset($rules['password'], $rules['password_confirmation']);
+              
+              // Use the built in Ardent function override unique trigger for this user
+              $rules = $this->buildUniqueExclusionRules($rules);
+              
+              if  (!$this->password && !$this->password_confirmation )
+              {  
+                $this->password = $this->getOriginal('password');
+                $this->autoHashPasswordAttributes = false;
+                unset($rules['password'], $rules['password_confirmation']);
+              }
             }
             return parent::save( $rules, $customMessages, $options, $beforeSave, $afterSave );
         }
