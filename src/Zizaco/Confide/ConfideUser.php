@@ -55,18 +55,6 @@ class ConfideUser extends Ardent implements UserInterface {
     );
 
     /**
-     * Rules for when updating a user.
-     *
-     * @var array
-     */
-    protected $updateRules = array(
-        'username' => 'required|alpha_dash',
-        'email' => 'required|email',
-        'password' => 'between:4,11|confirmed',
-        'password_confirmation' => 'between:4,11',
-    );
-
-    /**
      * Create a new ConfideUser instance.
      */
     public function __construct( array $attributes = array() )
@@ -251,35 +239,32 @@ class ConfideUser extends Ardent implements UserInterface {
             {
               if (empty($rules)) $rules = static::$rules;
               
-              // Use the built in Ardent function override unique trigger for this user
-              $rules = $this->buildUniqueExclusionRules($rules);
-              
-              if  (!$this->password && !$this->password_confirmation )
+            if  (!$this->password && !$this->password_confirmation )
               {  
                 $this->password = $this->getOriginal('password');
                 $this->autoHashPasswordAttributes = false;
                 unset($rules['password'], $rules['password_confirmation']);
               }
+              // Use the built in Ardent function override unique trigger for this user
+              $rules = $this->buildUniqueExclusionRules($rules);
+              
+              
             }
             return parent::save( $rules, $customMessages, $options, $beforeSave, $afterSave );
         }
     }
-
+    
     /**
-     * Alias of save but uses updateRules instead of rules.
-     * @param array   $rules
-     * @param array   $customMessages
-     * @param array   $options
-     * @param Closure $beforeSave
-     * @param Closure $afterSave
-     * @return bool
+     * On most websites, when a user updates his details and leaves the password empty
+     * the password should be left alone. Confide will handle that for you automatically
+     * and you don't need to call this function.
+     * If however, you are using Former's live inbrowser form validation, this helper function 
+     * would filter out the required section while keeping things like max, min, etc
+     * @param array $rules
      */
-    public function amend( array $rules = array(), array $customMessages = array(), array $options = array(), \Closure $beforeSave = null, \Closure $afterSave = null )
+    public function filterPasswordRequirement(array $rules = array())
     {
-        if (empty($rules)) {
-            $rules = $this->getUpdateRules();
-        }
-        return $this->save( $rules, $customMessages, $options, $beforeSave, $afterSave );
+      
     }
 
     /**
@@ -339,115 +324,4 @@ class ConfideUser extends Ardent implements UserInterface {
         return md5( uniqid(mt_rand(), true) );
     }
 
-    /**
-     * [Deprecated]
-     *
-     * @deprecated
-     */
-    public function getUpdateRules()
-    {
-        return $this->updateRules;
-    }
-
-    /**
-     * [Deprecated] Parses the two given users and compares the unique fields.
-     *
-     * @deprecated
-     * @param $oldUser
-     * @param $updatedUser
-     * @param array $rules
-     */
-    public function prepareRules($oldUser, $updatedUser, $rules=array())
-    {
-        if(empty($rules)) {
-            $rules = $this->getRules();
-        }
-
-        foreach($rules as $rule => $validation) {
-            // get the rules with unique.
-            if (strpos($validation, 'unique')) {
-                // Compare old vs new
-                if($oldUser->$rule != $updatedUser->$rule) {
-                    // Set update rule to creation rule
-                    $updateRules = $this->getUpdateRules();
-                    $updateRules[$rule] = $validation;
-                    $this->setUpdateRules($updateRules);
-                }
-            }
-        }
-    }
-
-    /**
-     * [Deprecated]
-     *
-     * @deprecated
-     */
-    public function getRules()
-    {
-        return self::$rules;
-    }
-
-    /**
-     * [Deprecated]
-     *
-     * @deprecated
-     */
-    public function setUpdateRules($set)
-    {
-        $this->updateRules = $set;
-    }
-
-    /**
-     * [Deprecated] Find an user by it's credentials. Perform a 'where' within
-     * the fields contained in the $identityColumns.
-     *
-     * @deprecated Use ConfideRepository getUserByIdentity instead.
-     * @param  array $credentials      An array containing the attributes to search for
-     * @param  mixed $identityColumns  Array of attribute names or string (for one atribute)
-     * @return ConfideUser             User object
-     */
-    public function getUserFromCredsIdentity($credentials, $identity_columns = array('username', 'email'))
-    {
-        return static::$app['confide.repository']->getUserByIdentity($credentials, $identity_columns);
-    }
-
-    /**
-     * [Deprecated] Checks if an user exists by it's credentials. Perform a 'where' within
-     * the fields contained in the $identityColumns.
-     *
-     * @deprecated Use ConfideRepository getUserByIdentity instead.
-     * @param  array $credentials      An array containing the attributes to search for
-     * @param  mixed $identityColumns  Array of attribute names or string (for one atribute)
-     * @return boolean                 Exists?
-     */
-    public function checkUserExists($credentials, $identity_columns = array('username', 'email'))
-    {
-        $user = static::$app['confide.repository']->getUserByIdentity($credentials, $identity_columns);
-
-        if ($user) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * [Deprecated] Checks if an user is confirmed by it's credentials. Perform a 'where' within
-     * the fields contained in the $identityColumns.
-     *
-     * @deprecated Use ConfideRepository getUserByIdentity instead.
-     * @param  array $credentials      An array containing the attributes to search for
-     * @param  mixed $identityColumns  Array of attribute names or string (for one atribute)
-     * @return boolean                 Is confirmed?
-     */
-    public function isConfirmed($credentials, $identity_columns = array('username', 'email'))
-    {
-        $user = static::$app['confide.repository']->getUserByIdentity($credentials, $identity_columns);
-
-        if (! is_null($user) and $user->confirmed) {
-            return true;
-        } else {
-            return false;
-        }
-    }
 }

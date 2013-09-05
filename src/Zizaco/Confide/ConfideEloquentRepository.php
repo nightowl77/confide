@@ -64,7 +64,7 @@ class ConfideEloquentRepository implements ConfideRepository
      */
     public function confirm( $code )
     {
-        $user = $this->model()->where('confirmation_code', '=', $code)->get()->first();
+        $user = $this->model()->where('confirmation_code', '=', $code)->first();
         if( $user )
         {
             return $user->confirm();
